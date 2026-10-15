@@ -1,0 +1,30 @@
+[package]
+name = "project-switcher"
+version = "0.1.0"
+edition = "2024"
+description = "proj — fast TUI/CLI to discover, clone and jump between Git repositories"
+license = "MIT"
+repository = "https://github.com/Miki000000/project-switcher"
+
+[[bin]]
+name = "proj"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+crossterm = "0.29.0"
+dirs = "7.0.0"
+libc = "0.2"
+nucleo-matcher = "0.3.1"
+ratatui = "0.30.2"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+toml = "1.1.8"
+toml_edit = "0.25.17"
+unicode-width = "0.2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
