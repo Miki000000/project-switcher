@@ -23,7 +23,7 @@ pub fn init_script(shell: Shell, cmd: &str) -> String {
   __proj_status=$?
   if [ -s "$__proj_file" ]; then
     __proj_dir="$(cat -- "$__proj_file")"
-    [ -d "$__proj_dir" ] && cd -- "$__proj_dir"
+    [ -d "$__proj_dir" ] && builtin cd -- "$__proj_dir"
   fi
   rm -f -- "$__proj_file"
   return $__proj_status
@@ -44,7 +44,7 @@ function {cmd} --wraps proj --description 'proj: jump between repositories'
     set -l __proj_status $status
     if test -s $__proj_file
         set -l __proj_dir (cat -- $__proj_file)
-        test -d "$__proj_dir"; and cd -- $__proj_dir
+        test -d "$__proj_dir"; and builtin cd $__proj_dir
     end
     rm -f -- $__proj_file
     return $__proj_status
@@ -63,9 +63,33 @@ pub fn request_cd(path: &Path) -> Result<()> {
     println!("{}", path.display());
     if std::io::stdout().is_terminal() {
         eprintln!(
-            "proj: shell integration is not active, so the directory was printed instead.\n      \
-             Enable it with: eval \"$(proj init zsh)\"   (or bash / `proj init fish | source`)"
+            "proj: shell integration is not active, so the directory was printed instead.\n      {}",
+            integration_hint()
         );
     }
     Ok(())
+}
+
+fn integration_hint() -> String {
+    let rc = std::env::var_os("ZDOTDIR")
+        .map(std::path::PathBuf::from)
+        .or_else(dirs::home_dir)
+        .unwrap_or_default()
+        .join(".zshrc");
+    let managed = rc.is_symlink()
+        && rc
+            .canonicalize()
+            .is_ok_and(|target| target.starts_with("/nix/store"));
+    if managed {
+        format!(
+            "{} is managed by Home Manager; add this to your configuration and switch:\n      \
+             programs.zsh.initContent = ''eval \"$(proj init zsh)\"'';",
+            crate::config::tilde(&rc)
+        )
+    } else {
+        format!(
+            "Run ./install.sh from the proj repository, or add this to {}:  eval \"$(proj init zsh)\"",
+            crate::config::tilde(&rc)
+        )
+    }
 }

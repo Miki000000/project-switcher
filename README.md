@@ -21,7 +21,7 @@ From a clone of this repository:
 ./install.sh
 ```
 
-It builds inside `nix-shell` when Nix is available (otherwise with the system `cargo`) and installs the binary to `~/.local/bin/proj` (override with `PROJ_BIN_DIR=/some/bin ./install.sh`).
+It builds with `cargo` and installs the binary to `~/.local/bin/proj`, replacing any previous install (override the location with `PROJ_BIN_DIR=/some/bin ./install.sh`). It then sets up shell integration, or prints the Home Manager option when your shell rc file is managed by Nix.
 
 With Nix flakes:
 
@@ -39,17 +39,16 @@ Runtime requirements: `git`. Optional: `gh` and/or `glab`, logged in (`gh auth l
 
 ## Shell integration
 
-A program cannot change its parent shell's directory, so `proj` ships a small wrapper function. Add one line to your shell config:
+A program cannot change its parent shell's directory, so `proj` ships a small zsh wrapper function. Directory changing currently targets **zsh**; `install.sh` adds this line to `~/.zshrc` automatically:
 
 ```sh
-# ~/.zshrc
-eval "$(proj init zsh)"
+command -v proj >/dev/null && eval "$(proj init zsh)"
+```
 
-# ~/.bashrc
-eval "$(proj init bash)"
+If `~/.zshrc` is managed by Home Manager (a read-only link into `/nix/store`), the script cannot edit it and prints the option to add instead:
 
-# ~/.config/fish/config.fish
-proj init fish | source
+```nix
+programs.zsh.initContent = ''eval "$(proj init zsh)"'';
 ```
 
 Use `--cmd p` to name the function `p` instead. Without the wrapper, `proj` prints the selected path on stdout, so `cd "$(proj)"` also works.
